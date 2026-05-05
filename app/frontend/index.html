@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.tailwindcss.com"></script>
+<title>QR Generator</title>
+</head>
+
+<body class="bg-gray-100">
+
+<!-- Navbar -->
+<div class="bg-white shadow p-4 flex justify-between items-center">
+  <h1 class="text-xl font-bold">🔗 QR Generator</h1>
+
+  <div id="nav-right"></div>
+</div>
+
+<!-- Content -->
+<div class="flex justify-center mt-20">
+  <div class="bg-white p-8 rounded-xl shadow w-[500px]">
+
+    <h2 class="text-xl font-semibold mb-4">สร้าง QR Code</h2>
+
+    <!-- URL Input -->
+    <input id="url" placeholder="https://example.com"
+      class="w-full p-3 border rounded-lg mb-2"/>
+
+    <input type="file" id="logo"
+      class="w-full p-2 border rounded mb-3" />
+
+    <!-- Example -->
+    <div class="text-sm text-gray-500 mb-4">
+      ตัวอย่าง:
+      <button onclick="useExample('https://google.com')" class="text-blue-500">Google</button> |
+      <button onclick="useExample('https://facebook.com')" class="text-blue-500">Facebook</button> |
+      <button onclick="useExample('https://youtube.com')" class="text-blue-500">YouTube</button>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview" class="hidden text-center mb-4">
+      <p class="text-gray-500 text-sm">Preview</p>
+      <img id="previewImg" class="mx-auto w-32 mt-2 border rounded">
+    </div>
+
+    <!-- Generate Button -->
+    <button onclick="createQR()"
+      class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
+      Generate
+    </button>
+
+    <!-- Result -->
+    <div id="result" class="mt-6 text-center"></div>
+
+  </div>
+</div>
+
+<!-- ================= JS ================= -->
+
+<script>
+
+function useExample(url){
+  document.getElementById("url").value = url;
+  previewQR();
+}
+
+function previewQR(){
+  const url = document.getElementById("url").value;
+  if(!url) return;
+
+  const img = document.getElementById("previewImg");
+
+  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" 
+            + encodeURIComponent(url);
+
+  document.getElementById("preview").classList.remove("hidden");
+}
+
+document.getElementById("url").addEventListener("input", previewQR);
+
+
+async function createQR(){
+  const url = document.getElementById("url").value;
+  const logoFile = document.getElementById("logo").files[0];
+
+  if(!url){
+    alert("กรุณาใส่ URL");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("url", url);
+
+  if (logoFile) {
+    formData.append("logo", logoFile);
+  }
+
+  const res = await fetch("/qr/", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  console.log("API RESULT:", data);
+
+  document.getElementById("result").innerHTML = `
+    <div class="bg-gray-100 p-4 rounded-lg">
+      <p class="font-semibold mb-2">Short Link</p>
+
+      <a href="${data.short_link}" target="_blank"
+        class="text-blue-500 break-all">
+        ${data.short_link}
+      </a>
+
+      <br><br>
+
+      <img src="${data.qr_image}"
+        class="mx-auto w-40 border rounded shadow">
+
+      <br>
+
+      <button onclick="copyLink('${data.short_link}')"
+        class="mt-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+        Copy Link
+      </button>
+    </div>
+  `;
+}
+
+
+function copyLink(link){
+  navigator.clipboard.writeText(link);
+  alert("คัดลอกแล้ว!");
+}
+
+</script>
+</body>
+</html>

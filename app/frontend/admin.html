@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+
+<!-- Header -->
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold">📊 Admin Dashboard</h1>
+
+  <button onclick="logout()" 
+    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+    Logout
+  </button>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+  <div class="bg-white p-4 rounded shadow">
+    <p class="text-gray-500">Total QR</p>
+    <h2 id="totalQR" class="text-2xl font-bold">0</h2>
+  </div>
+  <div class="bg-white p-4 rounded shadow">
+    <p class="text-gray-500">Total Scan</p>
+    <h2 id="totalScan" class="text-2xl font-bold">0</h2>
+  </div>
+</div>
+
+<!-- Table -->
+<table class="bg-white w-full shadow rounded">
+<thead>
+<tr class="bg-gray-200">
+<th class="p-3">ID</th>
+<th>URL</th>
+<th>Scan</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+</table>
+
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+  alert("กรุณา login ก่อน");
+  window.location.href = "/login";
+}
+
+const headers = {
+  "Authorization": "Bearer " + token
+};
+
+async function loadData() {
+  const res = await fetch("/admin/qrcodes", { headers });
+  const data = await res.json();
+
+  document.getElementById("totalQR").innerText = data.length;
+
+  let total = 0;
+
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+
+  data.forEach(qr => {
+    total += qr.scan_count;
+
+    table.innerHTML += `
+      <tr class="border-t">
+        <td class="p-2">${qr.id}</td>
+        <td>${qr.original_url}</td>
+        <td>${qr.scan_count}</td>
+        <td>
+          <button onclick="deleteQR(${qr.id})"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("totalScan").innerText = total;
+}
+
+async function deleteQR(id) {
+  await fetch(`/admin/qrcodes/${id}`, {
+    method: "DELETE",
+    headers
+  });
+  loadData();
+}
+
+function logout(){
+  localStorage.removeItem("token");
+  window.location.href = "/login";
+}
+
+loadData();
+</script>
+
+</body>
+</html>

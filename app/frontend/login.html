@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-r from-blue-500 to-purple-600 h-screen flex items-center justify-center">
+
+<div class="bg-white p-8 rounded-2xl shadow-xl w-[400px]">
+  <h1 class="text-2xl font-bold text-center mb-6">🔐 Login</h1>
+
+  <input id="username" placeholder="Username"
+    class="w-full p-3 border rounded-lg mb-3"/>
+
+  <input id="password" type="password" placeholder="Password"
+    class="w-full p-3 border rounded-lg mb-4"/>
+
+  <button onclick="login()"
+    class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
+    Login
+  </button>
+</div>
+
+<script>
+async function login() {
+  const form = new URLSearchParams();
+  form.append("username", username.value);
+  form.append("password", password.value);
+
+  const res = await fetch("/auth/login", {
+    method: "POST",
+    body: form
+  });
+
+  const data = await res.json();
+
+  if (data.access_token) {
+    localStorage.setItem("token", data.access_token);
+    window.location.href = "/admin";
+  } else {
+    alert("Login failed");
+  }
+}
+</script>
+
+</body>
+</html>
