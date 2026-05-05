@@ -1,8 +1,9 @@
 fastapi
-uvicorn[standard]
+uvicorn
 sqlalchemy
 pydantic
-python-jose[cryptography]
+python-jose
 passlib[bcrypt]
 qrcode
 python-multipart
+Pillow
