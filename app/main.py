@@ -84,7 +84,7 @@ def admin_page():
 
 ##Push ขึ้น GitHub
 ##git add .
-##git commit -m "add auth frontend"
+##git commit -m "add auth frontend",git commit -m "update project"
 ##git push
 
 ##ขึ้น git

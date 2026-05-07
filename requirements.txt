@@ -7,3 +7,4 @@ passlib[bcrypt]
 qrcode
 python-multipart
 Pillow
+bcrypt==4.0.1
