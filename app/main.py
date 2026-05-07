@@ -51,7 +51,21 @@ def login_page():
 def admin_page():
     return FileResponse(BASE_DIR / "frontend" / "admin.html")
 
+@app.get("/")
+def login_page():
+    return FileResponse("app/frontend/login.html")
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse("app/frontend/index.html")
+
 ##python -m uvicorn app.main:app --reload
 ##http://127.0.0.1:8000/login
 ##http://127.0.0.1:8000/admin
 ## eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTc3NzgzMDQzNX0.SfFVXHHLu7F47baHvQnoDr4PaCvASLSvmYchFdQac0I
+##ขึ้น git
+## git push
+##git push -u origin main
+##ขึ้นคราว https://dashboard.render.com/web/srv-d7t43fegvqtc73a98bog/deploys/dep-d7t43fmgvqtc73a98c90
+## ขึ้นคลาว https://dashboard.render.com/web/srv-d7t43fegvqtc73a98bog/logs
+## https://app-utgg.onrender.com/

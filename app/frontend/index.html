@@ -58,6 +58,30 @@
 
 <script>
 
+// ===== CHECK LOGIN =====
+
+const token = localStorage.getItem("token");
+
+if(!token){
+  window.location.href = "/";
+}
+
+// ===== NAVBAR =====
+
+document.getElementById("nav-right").innerHTML = `
+  <button onclick="logout()"
+    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+    Logout
+  </button>
+`;
+
+function logout(){
+  localStorage.removeItem("token");
+  window.location.href = "/";
+}
+
+// ======================
+
 function useExample(url){
   document.getElementById("url").value = url;
   previewQR();
@@ -79,6 +103,7 @@ document.getElementById("url").addEventListener("input", previewQR);
 
 
 async function createQR(){
+
   const url = document.getElementById("url").value;
   const logoFile = document.getElementById("logo").files[0];
 
@@ -95,7 +120,13 @@ async function createQR(){
   }
 
   const res = await fetch("/qr/", {
+
     method: "POST",
+
+    headers:{
+      "Authorization": "Bearer " + token
+    },
+
     body: formData
   });
 
@@ -105,6 +136,7 @@ async function createQR(){
 
   document.getElementById("result").innerHTML = `
     <div class="bg-gray-100 p-4 rounded-lg">
+
       <p class="font-semibold mb-2">Short Link</p>
 
       <a href="${data.short_link}" target="_blank"
@@ -123,6 +155,7 @@ async function createQR(){
         class="mt-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
         Copy Link
       </button>
+
     </div>
   `;
 }
