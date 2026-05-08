@@ -22,34 +22,57 @@
     <h2 class="text-xl font-semibold mb-4">สร้าง QR Code</h2>
 
     <!-- URL Input -->
-    <input id="url" placeholder="https://example.com"
+    <input id="url"
+      placeholder="https://example.com"
       class="w-full p-3 border rounded-lg mb-2"/>
 
-    <input type="file" id="logo"
+    <!-- Upload Logo -->
+    <input type="file"
+      id="logo"
       class="w-full p-2 border rounded mb-3" />
 
     <!-- Example -->
     <div class="text-sm text-gray-500 mb-4">
       ตัวอย่าง:
-      <button onclick="useExample('https://google.com')" class="text-blue-500">Google</button> |
-      <button onclick="useExample('https://facebook.com')" class="text-blue-500">Facebook</button> |
-      <button onclick="useExample('https://youtube.com')" class="text-blue-500">YouTube</button>
+      <button onclick="useExample('https://google.com')"
+        class="text-blue-500">
+        Google
+      </button> |
+
+      <button onclick="useExample('https://facebook.com')"
+        class="text-blue-500">
+        Facebook
+      </button> |
+
+      <button onclick="useExample('https://youtube.com')"
+        class="text-blue-500">
+        YouTube
+      </button>
     </div>
 
     <!-- Preview -->
-    <div id="preview" class="hidden text-center mb-4">
-      <p class="text-gray-500 text-sm">Preview</p>
-      <img id="previewImg" class="mx-auto w-32 mt-2 border rounded">
+    <div id="preview"
+      class="hidden text-center mb-4">
+
+      <p class="text-gray-500 text-sm">
+        Preview
+      </p>
+
+      <img id="previewImg"
+        class="mx-auto w-32 mt-2 border rounded">
     </div>
 
     <!-- Generate Button -->
     <button onclick="createQR()"
       class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
+
       Generate
+
     </button>
 
     <!-- Result -->
-    <div id="result" class="mt-6 text-center"></div>
+    <div id="result"
+      class="mt-6 text-center"></div>
 
   </div>
 </div>
@@ -74,7 +97,7 @@ document.getElementById("nav-right").innerHTML = `
 
     <a href="/admin"
       class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-      ⚙ Dashboard
+      ⚙ Admin
     </a>
 
     <button onclick="logout()"
@@ -87,31 +110,44 @@ document.getElementById("nav-right").innerHTML = `
 `;
 
 function logout(){
+
   localStorage.removeItem("token");
   window.location.href = "/";
+
 }
 
-// ======================
+// ===== EXAMPLE =====
 
 function useExample(url){
+
   document.getElementById("url").value = url;
   previewQR();
+
 }
 
+// ===== PREVIEW =====
+
 function previewQR(){
+
   const url = document.getElementById("url").value;
+
   if(!url) return;
 
   const img = document.getElementById("previewImg");
 
-  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" 
-            + encodeURIComponent(url);
+  img.src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data="
+    + encodeURIComponent(url);
 
-  document.getElementById("preview").classList.remove("hidden");
+  document.getElementById("preview")
+    .classList.remove("hidden");
+
 }
 
-document.getElementById("url").addEventListener("input", previewQR);
+document.getElementById("url")
+  .addEventListener("input", previewQR);
 
+// ===== CREATE QR =====
 
 async function createQR(){
 
@@ -119,15 +155,28 @@ async function createQR(){
   const logoFile = document.getElementById("logo").files[0];
 
   if(!url){
+
     alert("กรุณาใส่ URL");
     return;
+
   }
 
+  // Loading
+
+  document.getElementById("result").innerHTML = `
+    <p class="text-gray-500">
+      Generating QR...
+    </p>
+  `;
+
   const formData = new FormData();
+
   formData.append("url", url);
 
   if (logoFile) {
+
     formData.append("logo", logoFile);
+
   }
 
   const res = await fetch("/qr/", {
@@ -139,44 +188,143 @@ async function createQR(){
     },
 
     body: formData
+
   });
+
+  // Error
+
+  if(!res.ok){
+
+    document.getElementById("result").innerHTML = `
+      <p class="text-red-500">
+        Generate failed
+      </p>
+    `;
+
+    return;
+
+  }
 
   const data = await res.json();
 
   console.log("API RESULT:", data);
 
+  // Result
+
   document.getElementById("result").innerHTML = `
+
     <div class="bg-gray-100 p-4 rounded-lg">
 
-      <p class="font-semibold mb-2">Short Link</p>
+      <p class="font-semibold mb-2">
+        Short Link
+      </p>
 
-      <a href="${data.short_link}" target="_blank"
+      <a href="${data.short_link}"
+        target="_blank"
         class="text-blue-500 break-all">
+
         ${data.short_link}
+
       </a>
 
       <br><br>
 
       <img src="${data.qr_image}"
-        class="mx-auto w-40 border rounded shadow">
+
+        class="mx-auto w-40 border rounded shadow cursor-pointer"
+
+        onclick="openPreview('${data.qr_image}')">
 
       <br>
 
-      <button onclick="copyLink('${data.short_link}')"
-        class="mt-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-        Copy Link
-      </button>
+      <div class="flex justify-center gap-2">
+
+        <!-- COPY -->
+
+        <button onclick="copyLink('${data.short_link}')"
+
+          class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+
+          Copy Link
+
+        </button>
+
+        <!-- DOWNLOAD -->
+
+        <a href="${data.qr_image}"
+          download
+
+          class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+
+          Download
+
+        </a>
+
+      </div>
 
     </div>
+
   `;
+
 }
 
+// ===== COPY =====
 
 function copyLink(link){
+
   navigator.clipboard.writeText(link);
+
   alert("คัดลอกแล้ว!");
+
+}
+
+// ===== IMAGE PREVIEW =====
+
+function openPreview(src){
+
+  document.getElementById("modalImg").src = src;
+
+  document.getElementById("imageModal")
+    .classList.remove("hidden");
+
+}
+
+function closePreview(){
+
+  document.getElementById("imageModal")
+    .classList.add("hidden");
+
 }
 
 </script>
+
+<!-- IMAGE MODAL -->
+
+<div id="imageModal"
+
+  class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+
+  <div class="relative">
+
+    <!-- CLOSE -->
+
+    <button onclick="closePreview()"
+
+      class="absolute -top-10 right-0 text-white text-3xl">
+
+      ✕
+
+    </button>
+
+    <!-- IMAGE -->
+
+    <img id="modalImg"
+
+      class="max-w-[90vw] max-h-[90vh] rounded shadow-lg">
+
+  </div>
+
+</div>
+
 </body>
 </html>

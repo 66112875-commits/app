@@ -1,107 +1,336 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+
 <meta charset="UTF-8">
+
 <script src="https://cdn.tailwindcss.com"></script>
+
+<title>Admin Dashboard</title>
+
 </head>
 
 <body class="bg-gray-100 p-6">
 
-<!-- Header -->
+<!-- HEADER -->
+
 <div class="flex justify-between items-center mb-6">
-  <h1 class="text-2xl font-bold">📊 Admin Dashboard</h1>
 
-  <button onclick="logout()" 
-    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-    Logout
-  </button>
+  <h1 class="text-2xl font-bold">
+    📊 Admin Dashboard
+  </h1>
+
+  <div class="flex gap-2">
+
+    <a href="/dashboard"
+      class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+
+      สร้าง QR
+
+    </a>
+
+    <button onclick="logout()"
+      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+
+      Logout
+
+    </button>
+
+  </div>
+
 </div>
 
-<!-- Stats -->
-<div class="grid grid-cols-2 gap-4 mb-6">
-  <div class="bg-white p-4 rounded shadow">
-    <p class="text-gray-500">Total QR</p>
-    <h2 id="totalQR" class="text-2xl font-bold">0</h2>
+<!-- STATS -->
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+  <!-- TOTAL QR -->
+
+  <div class="bg-white p-4 rounded-xl shadow">
+
+    <p class="text-gray-500">
+      Total QR
+    </p>
+
+    <h2 id="totalQR"
+      class="text-3xl font-bold mt-2">
+
+      0
+
+    </h2>
+
   </div>
-  <div class="bg-white p-4 rounded shadow">
-    <p class="text-gray-500">Total Scan</p>
-    <h2 id="totalScan" class="text-2xl font-bold">0</h2>
+
+  <!-- TOTAL SCAN -->
+
+  <div class="bg-white p-4 rounded-xl shadow">
+
+    <p class="text-gray-500">
+      Total Scan
+    </p>
+
+    <h2 id="totalScan"
+      class="text-3xl font-bold mt-2">
+
+      0
+
+    </h2>
+
   </div>
+
 </div>
 
-<!-- Table -->
-<table class="bg-white w-full shadow rounded">
+<!-- TABLE -->
+
+<div class="bg-white rounded-xl shadow overflow-x-auto">
+
+<table class="w-full">
+
 <thead>
-<tr class="bg-gray-200">
-<th class="p-3">ID</th>
-<th>URL</th>
-<th>Scan</th>
-<th>Action</th>
+
+<tr class="bg-gray-200 text-left">
+
+  <th class="p-4">QR</th>
+
+  <th>URL</th>
+
+  <th>Short</th>
+
+  <th>Scan</th>
+
+  <th>Created</th>
+
+  <th>Action</th>
+
 </tr>
+
 </thead>
 
 <tbody id="table"></tbody>
+
 </table>
 
+</div>
+
+<!-- ================= JS ================= -->
+
 <script>
+
+// ===== TOKEN =====
+
 const token = localStorage.getItem("token");
 
 if (!token) {
+
   alert("กรุณา login ก่อน");
+
   window.location.href = "/login";
+
 }
 
+// ===== HEADERS =====
+
 const headers = {
+
   "Authorization": "Bearer " + token
+
 };
 
+// ===== LOAD DATA =====
+
 async function loadData() {
-  const res = await fetch("/admin/qrcodes", { headers });
+
+  const res = await fetch("/admin/qrcodes", {
+
+    headers
+
+  });
+
   const data = await res.json();
 
-  document.getElementById("totalQR").innerText = data.length;
+  console.log(data);
+
+  document.getElementById("totalQR")
+    .innerText = data.length;
 
   let total = 0;
 
   const table = document.getElementById("table");
+
   table.innerHTML = "";
 
   data.forEach(qr => {
+
     total += qr.scan_count;
 
     table.innerHTML += `
-      <tr class="border-t">
-        <td class="p-2">${qr.id}</td>
-        <td>${qr.original_url}</td>
-        <td>${qr.scan_count}</td>
-        <td>
-          <button onclick="deleteQR(${qr.id})"
-          class="bg-red-500 text-white px-2 py-1 rounded">
-            Delete
-          </button>
+
+      <tr class="border-t hover:bg-gray-50">
+
+        <!-- QR IMAGE -->
+
+        <td class="p-3">
+
+          <img src="${qr.qr_image}"
+
+            onclick="openPreview('${qr.qr_image}')"
+
+            class="w-20 border rounded cursor-pointer hover:scale-105 transition">
+
         </td>
+
+        <!-- URL -->
+
+        <td class="max-w-[300px] break-all text-sm p-3">
+
+          ${qr.original_url}
+
+        </td>
+
+        <!-- SHORT -->
+
+        <td class="p-3">
+
+          ${qr.short_code}
+
+        </td>
+
+        <!-- SCAN -->
+
+        <td class="font-bold p-3">
+
+          ${qr.scan_count}
+
+        </td>
+
+        <!-- CREATED -->
+
+        <td class="p-3 text-sm text-gray-600">
+
+          ${qr.created_at}
+
+        </td>
+
+        <!-- ACTION -->
+
+        <td class="space-x-2 p-3">
+
+          <!-- DOWNLOAD -->
+
+          <a href="${qr.qr_image}"
+
+            download
+
+            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+
+            Download
+
+          </a>
+
+          <!-- DELETE -->
+
+          <button onclick="deleteQR(${qr.id})"
+
+            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+
+            Delete
+
+          </button>
+
+        </td>
+
       </tr>
+
     `;
+
   });
 
-  document.getElementById("totalScan").innerText = total;
+  document.getElementById("totalScan")
+    .innerText = total;
+
 }
+
+// ===== DELETE =====
 
 async function deleteQR(id) {
+
+  const confirmDelete = confirm("Delete QR ?");
+
+  if (!confirmDelete) return;
+
   await fetch(`/admin/qrcodes/${id}`, {
+
     method: "DELETE",
+
     headers
+
   });
+
   loadData();
+
 }
+
+// ===== LOGOUT =====
 
 function logout(){
+
   localStorage.removeItem("token");
+
   window.location.href = "/login";
+
 }
 
+// ===== IMAGE PREVIEW =====
+
+function openPreview(src){
+
+  document.getElementById("modalImg").src = src;
+
+  document.getElementById("imageModal")
+    .classList.remove("hidden");
+
+}
+
+function closePreview(){
+
+  document.getElementById("imageModal")
+    .classList.add("hidden");
+
+}
+
+// ===== START =====
+
 loadData();
+
 </script>
+
+<!-- IMAGE MODAL -->
+
+<div id="imageModal"
+
+  class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+
+  <div class="relative">
+
+    <!-- CLOSE -->
+
+    <button onclick="closePreview()"
+
+      class="absolute -top-10 right-0 text-white text-3xl">
+
+      ✕
+
+    </button>
+
+    <!-- IMAGE -->
+
+    <img id="modalImg"
+
+      class="max-w-[90vw] max-h-[90vh] rounded shadow-lg">
+
+  </div>
+
+</div>
 
 </body>
 </html>

@@ -19,7 +19,22 @@ def get_all_qr(
     admin=Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    return db.query(QRCode).all()
+    
+    qrs = db.query(QRCode).all()
+
+    result = []
+
+    for qr in qrs:
+        result.append({
+            "id": qr.id,
+            "original_url": qr.original_url,
+            "short_code": qr.short_code,
+            "qr_image": qr.qr_image,
+            "scan_count": qr.scan_count,
+            "created_at": qr.created_at.strftime("%d/%m/%Y %H:%M")
+        })
+
+    return result
 
 @router.get("/stats")
 def stats(

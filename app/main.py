@@ -5,38 +5,99 @@ from fastapi.staticfiles import StaticFiles
 
 from sqlalchemy.orm import Session
 from pathlib import Path
+import os
 
 from .database import Base, engine, SessionLocal
-from .models import QRCode
+from .models import QRCode, User
+
+from .auth_core.hashing import hash_password
 
 from .routers.auth import router as auth_router
 from .routers.qr import router as qr_router
 from .routers.admin import router as admin_router
 
 
-app = FastAPI()
+# ================= APP =================
+
+app = FastAPI(
+    title="QR Management API",
+    description="ระบบจัดการ QR Code",
+    version="1.0.0",
+
+    docs_url="/docs",
+    redoc_url="/api-docs",
+
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,
+        "docExpansion": "none",
+        "persistAuthorization": True,
+    }
+)
+
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:5500",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+
 Base.metadata.create_all(bind=engine)
+
+
+
+db = SessionLocal()
+
+admin = db.query(User).filter(
+    User.username == "admin"
+).first()
+
+if not admin:
+
+    admin_password = os.getenv(
+        "ADMIN_PASSWORD",
+        "admin123"
+    )
+
+    admin_user = User(
+        username="admin",
+        password=hash_password(admin_password),
+        role="admin"
+    )
+
+    db.add(admin_user)
+    db.commit()
+
+db.close()
 
 
 app.include_router(auth_router)
 app.include_router(qr_router)
 app.include_router(admin_router)
 
-app.mount("/qrcodes", StaticFiles(directory="qrcodes"), name="qrcodes")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+app.mount(
+    "/qrcodes",
+    StaticFiles(directory="qrcodes"),
+    name="qrcodes"
+)
+
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent
+
 
 
 @app.get("/r/{code}")
@@ -49,33 +110,49 @@ def redirect(code: str):
     ).first()
 
     if qr:
+
         qr.scan_count += 1
+
         db.commit()
+        db.close()
 
         return RedirectResponse(qr.original_url)
+
+    db.close()
 
     return {"error": "Not found"}
 
 
-# หน้าแรก = Login
+# ================= PAGES =================
+
 @app.get("/")
 def home():
-    return FileResponse(BASE_DIR / "frontend" / "login.html")
+    return FileResponse(
+        BASE_DIR / "frontend" / "login.html"
+    )
 
-# หน้า Login
+
 @app.get("/login")
 def login_page():
-    return FileResponse(BASE_DIR / "frontend" / "login.html")
+    return FileResponse(
+        BASE_DIR / "frontend" / "login.html"
+    )
 
-# หน้า Generator
+
 @app.get("/dashboard")
 def dashboard():
-    return FileResponse(BASE_DIR / "frontend" / "index.html")
+    return FileResponse(
+        BASE_DIR / "frontend" / "index.html"
+    )
 
-# หน้า Admin
+
 @app.get("/admin")
 def admin_page():
-    return FileResponse(BASE_DIR / "frontend" / "admin.html")
+    return FileResponse(
+        BASE_DIR / "frontend" / "admin.html"
+    )
+
+
 
 ##python -m uvicorn app.main:app --reload
 ##http://127.0.0.1:8000/login
